@@ -2,6 +2,8 @@ import User from "../models/User.js"
 import { Purchase } from "../models/Purchase.js";
 import Course from "../models/Course.js";
 import Stripe from 'stripe';
+import mongoose from 'mongoose'
+
 
 import { CourseProgress } from "../models/CourseProgress.js";
 
@@ -54,7 +56,6 @@ export const purchaseCourse= async (req,res)=>{
         const currency = process.env.CURRENCY.toLowerCase()
 
         // creting line items to for stripe 
-
         const line_items=[{
             price_data:{
                 currency,
@@ -88,7 +89,6 @@ export const purchaseCourse= async (req,res)=>{
 
 // update user course progress 
  export const updateUserCourseProgress = async(req,res)=>{
-
     try {
         const userId = req.auth.userId
         const {courseId, lectureId}= req.body

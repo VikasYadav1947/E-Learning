@@ -1,4 +1,5 @@
 import Course from "../models/Course.js";
+import mongoose from "mongoose";
 
 
 // Get All Courses
@@ -14,25 +15,42 @@ export const getAllCourse = async(req,res)=>{
 }
 
 //Get courses by id 
+// file ke top me add karna mat bhoolna
+
 export const getCourseId = async(req,res)=>{
     const {id} = req.params 
     try {
-        const courseData = await Course.findById(id).populate({path:'educator'})
+        // Step 1: agar 'all' hai to sab courses bhej de
+        if (id === "all") {
+            const allCourses = await Course.find({ isPublished: true });
+            return res.json({ success: true, courseData: allCourses });
+        }
 
-        //Remove lecture if ispreview is false
-        courseData.courseContent.forEach(chapter =>{
-            chapter.chapterContent.forEach(lecture=>{
-                if(!lecture.isPreviewFree){
-                    lecture.lectureUrl="";
+        // Step 2: ID valid hai ya nahi check kar
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.json({ success: false, message: "Invalid Course ID" });
+        }
+
+        // Step 3: Course find kar by id
+        const courseData = await Course.findById(id).populate({path:'educator'})
+        if (!courseData) {
+            return res.json({ success: false, message: "Course not found" });
+        }
+
+        // Step 4: Locked lectures ke urls blank kar de
+        courseData.courseContent.forEach(chapter => {
+            chapter.chapterContent.forEach(lecture => {
+                if (!lecture.isPreviewFree) {
+                    lecture.lectureUrl = "";
                 }
-            })
-        })
-        res.json ({success:true,courseData})
+            });
+        });
+
+        res.json({ success: true, courseData });
 
     } catch (error) {
-        res.json({success: false, message:error.message})
-        
+        res.json({ success: false, message: error.message })
     }
-
 }
+
 // Purchase course 

@@ -1,13 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import uniqid from 'uniqid';
 import Quill from 'quill';
 import { assets } from '../../assets/assets';
+import { AppContext} from '../../context/AppContext'
+import { toast } from 'react-toastify';
+import axios from 'axios';
+
 
 
 
 
 const AddCourse = () => {
-
+   
+  const { backendUrl , getToken } = useContext(AppContext)
   const quillRef = useRef(null);
   const editorRef= useRef(null);
   const [courseTitle, setCourseTitle]= useState('')
@@ -22,7 +27,7 @@ const AddCourse = () => {
       lectureTitle:'',
       lectureDuration:'',
       lectureUrl:'',
-      ispreviewFree:false,
+      isPreviewFree:false,
     }
   )
    
@@ -85,12 +90,49 @@ const AddCourse = () => {
         lectureTitle:'',
         lectureDuration:'',
         lectureUrl:'',
-        ispreviewFree:false,
+        isPreviewFree:false,
       });
   };
 
   const handleSubmit= async(e)=>{
-    e.preventDefault()
+    try {
+       e.preventDefault()
+       if(!image){
+        toast.error('Thumbnail Not Selected')
+       }
+       const courseData = {
+        courseTitle,
+        courseDescription : quillRef.current.root.innerHTML,
+        coursePrice:Number(coursePrice),
+        discount:Number(discount),
+        courseContent:chapters,
+       }
+
+       const formData = new FormData()
+       formData.append('courseData',JSON.stringify(courseData))
+       formData.append('image',image)
+       const token = await getToken()
+       const {data } = await axios.post(backendUrl + '/api/educator/add-course',formData,
+        {headers:{Authorization:`Bearer ${token}`}}
+       )
+      
+       if(data.success){
+        toast.success(data.message)
+        setCourseTitle('')
+        setCoursePrice(0)
+        setdiscount(0)
+        setImage(null)
+        setChapters([])
+        quillRef.current.root.innerHTML=""
+       } else{
+        toast.error(data.message)
+       }
+
+
+    } catch (error) {
+      toast.error(error.message)
+    }
+    
   };
 
 
@@ -161,7 +203,7 @@ const AddCourse = () => {
                 {chapter.chapterContent.map((lecture,lectureIndex)=>(
                   <div key={lectureIndex} className='flex justify-between items-center mb-2'>
                    <span>{lectureIndex+1} {lecture.lectureTitle} - {lecture.lectureDuration} mins- <a href={lecture.lectureUrl} target='_blank'
-                   className='text-blue-500'>Link</a> -{lecture.ispreviewFree ? 'Free Preview' :'Paid'}</span>
+                   className='text-blue-500'>Link</a> -{lecture.isPreviewFree ? 'Free Preview' :'Paid'}</span>
                    <img src={assets.cross_icon} alt="" onClick={()=>handleLecture('remove',chapter.chapterId,lectureIndex)} className='cursor-pointer' />
                   </div>
                 ))}
@@ -207,8 +249,8 @@ const AddCourse = () => {
                     <p>Is Preview Free ?</p>
                     <input type="checkbox"
                     className='mt-1 scale-125 '
-                    checked={lectureDetails.ispreviewFree}
-                    onChange={(e)=> setLectureDetails({...lectureDetails,ispreviewFree:e.target.checked})} />
+                    checked={lectureDetails.isPreviewFree}
+                    onChange={(e)=> setLectureDetails({...lectureDetails,isPreviewFree:e.target.checked})} />
                   </div>
 
                   <button type='button' className='w-full bg-blue-400 text-white px-4 py-2 rounded'

@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import { request, response } from "express";
 import { Purchase } from "../models/Purchase.js";
 import Course from "../models/Course.js";
+import Stripe from 'stripe';
 
 
 // API controller function to manage clerk user with database 
